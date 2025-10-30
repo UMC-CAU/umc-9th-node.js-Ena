@@ -3,6 +3,10 @@ import express from "express";          // -> ES Module
 import dotenv from "dotenv";        // .env 파일ㄹ부터 환경 변수 읽고 process.env. 객체를 통해 접근 가능
 import cors from "cors";
 import { handleUserSignUp } from "./controllers/user.controller.js";
+import { handleAddStore } from "./controllers/store.controller.js";
+import { handleAddReviewToStore } from "./controllers/review.controller.js";
+import { handleAddMissionToStore } from "./controllers/mission.controller.js";
+import { handleChallengeMission, handleGetUserMissions, } from "./controllers/userMission.controller.js";
 
 dotenv.config();
 
@@ -20,6 +24,13 @@ app.get('/', (req, res) => {
 })
 
 app.post("/api/v1/users/signup", handleUserSignUp);
+app.post("/api/v1/stores", handleAddStore);
+app.post("/api/v1/stores/:storeId/reviews", handleAddReviewToStore);
+app.post("/api/v1/stores/:storeId/missions", handleAddMissionToStore);
+app.post("/api/v1/missions/:missionId/challenge", handleChallengeMission);
+// GET /api/v1/missions?status=ongoing
+// GET /api/v1/missions?status=completed
+app.get("/api/v1/missions", handleGetUserMissions);
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
