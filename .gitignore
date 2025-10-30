@@ -32,3 +32,10 @@ coverage/
 
 # Misc
 *.tgz
+
+# dependency directories
+node_modules/
+
+# dotenv environment variable files
+.env
+.env.*
