@@ -8,30 +8,54 @@ import {
   missionExists, 
   getUserMissions
 } from '../repositories/user-mission.repository.js';
+import {
+  FirstUserNotFoundError,
+  MissionNotFoundError,
+  MissionAlreadyInProgressError,
+  UserMissionNotFoundAfterCreateError,
+} from '../error.js';
 
 export const startMissionService = async (missionIdParam: any) => {
   // 0) 가정: 특정 사용자(첫 번째 사용자)
   const userId = await getFirstUserId();
-  if (!userId) throw new Error('사용자가 존재하지 않습니다. 먼저 사용자부터 생성하세요.');
-
+  if (!userId) {
+    throw new FirstUserNotFoundError(
+      '사용자가 존재하지 않습니다. 먼저 사용자부터 생성하세요.',
+      { context: 'startMission' },
+    );
+  }
   // 1) 입력 파싱
   const dto = paramToStartMission(missionIdParam, userId);
 
   // 2) 미션 존재 검증
   const exists = await missionExists(dto.missionId);
-  if (!exists) throw new Error('존재하지 않는 미션입니다.');
+  if (!exists) {
+    throw new MissionNotFoundError('존재하지 않는 미션입니다.', {
+      missionId: dto.missionId,
+    });
+  }
 
   // 3) 이미 in_progress 인지 검증
   const dup = await isAlreadyInProgress(dto.userId, dto.missionId);
-  if (dup) throw new Error('이미 도전 중인 미션입니다.');
+  if (dup) {
+    throw new MissionAlreadyInProgressError('이미 도전 중인 미션입니다.', {
+      userId: dto.userId,
+      missionId: dto.missionId,
+    });
+  }
 
   // 4) 생성
   const id = await createUserMission(dto.userId, dto.missionId);
 
   // 5) 조회 후 응답 변환
   const row = await getUserMissionById(id);
-  if (!row) throw new Error('user_mission 생성 직후 조회에 실패했습니다.');
-
+  if (!row) {
+    throw new UserMissionNotFoundAfterCreateError(
+      'user_mission 생성 직후 조회에 실패했습니다.',
+      { userMissionId: id },
+    );
+  }
+  
   return userMissionToResponse({
     id: row.id,
     user_id: row.userId,

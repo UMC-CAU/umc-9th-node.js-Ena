@@ -2,11 +2,14 @@ import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { startMissionService, listMyMissions } from '../services/user-mission.service.js';
 import { getFirstUserId } from '../repositories/user-mission.repository.js';
+import { NoCurrentUserForMyMissionsError } from '../error.js';
 
 export const handleStartMission = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = await startMissionService(req.params.missionId);
-    res.status(StatusCodes.CREATED).json({ result });
+
+    // ✅ 공통 성공 응답 포맷
+    return res.status(StatusCodes.CREATED).success(result);
   } catch (err) {
     next(err);
   }
@@ -17,7 +20,11 @@ export const handleListMyMissions = async (req: Request, res: Response, next: Ne
   try {
     // 이번 주차: 세션/토큰이 없으므로 “첫 번째 사용자”를 가정
     const userId = await getFirstUserId(); // repositories/common.helper.ts 등
-    if (!userId) throw new Error('사용자가 없습니다. 먼저 회원가입을 해주세요.');
+    if (!userId) {
+      throw new NoCurrentUserForMyMissionsError(
+        '사용자가 없습니다. 먼저 회원가입을 해주세요.',
+      );
+    }
 
     // status 기본값: in_progress
     const statusQ = String(req.query.status ?? 'ongoing');
@@ -34,7 +41,9 @@ export const handleListMyMissions = async (req: Request, res: Response, next: Ne
         : 5;
 
     const out = await listMyMissions(userId, { status, cursor, size });
-    res.status(200).json(out);
+    
+    // ✅ 공통 성공 응답 포맷
+    return res.status(StatusCodes.OK).success(out);
   } catch (e) {
     next(e);
   }

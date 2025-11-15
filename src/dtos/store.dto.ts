@@ -91,7 +91,7 @@ export const responseFromReviews = (
 ) => ({
   data: reviews.map(r => ({
     id: Number(r.id),
-    authorId: r.user ? Number(r.user.id) : null,
+    autherId: r.user ? Number(r.user.id) : null,
     autherName: r.user?.name ?? '알 수 없음',
     content: r.content,
     score: r.score ?? null,

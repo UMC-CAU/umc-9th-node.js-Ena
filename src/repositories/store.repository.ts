@@ -42,35 +42,12 @@ export const getStoreById = async (storeId: number) => {
   });
 };
 
-export const getStoreReviews = async (
-  storeId: number,
-  opt: { cursor: number | null; size: number }
-) => {
-  const take = opt.size + 1; // 다음 페이지 존재여부 판단용
-  const where = {
-    storeId: storeId,
-    ...(opt.cursor ? { id: { gt: opt.cursor } } : {}),
-  };
-
-  const rows = await prisma.review.findMany({
-    where,
-    orderBy: { id: 'asc' },
-    take,
-    select: {
-      id: true,
-      body: true,
-      score: true,
-      createdAt: true,
-      user: { select: { id: true, name: true } },     // 닉네임
-      // store: { select: { id: true, name: true } }, // 필요시
-    },
+export const getStoreExists = async (storeId: number): Promise<boolean> => {
+  const row = await prisma.store.findUnique({
+    where: { id: storeId },
+    select: { id: true },
   });
-
-  let nextCursor: number | null = null;
-  if (rows.length > opt.size) {
-    const last = rows.pop()!;               // 초과분 제거
-    nextCursor = Number(last.id);
-  }
-
-  return { rows, nextCursor };
+  return Boolean(row?.id);
 };
+
+

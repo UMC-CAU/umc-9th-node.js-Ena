@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import { responseFromUser } from '../dtos/response.dto.js';
 import { bodyToUser } from '../dtos/user.dto.js';
 import { addUser, getUser, getUserPreferencesByUserId, setPreference } from '../repositories/user.repository.js';
+import { DuplicateUserEmailError, UserNotFoundAfterSignUpError } from "../error.js";
 
 const SALT_ROUNDS = Number(process.env.BCRYPT_SALT_ROUNDS ?? 10);
 
@@ -23,7 +24,8 @@ export const userSignUp = async (raw: any) => {
     phoneNumber: data.phoneNumber,
   });
 
-  if (userId === null) throw new Error('이미 존재하는 이메일입니다.');
+  if (userId === null) throw new DuplicateUserEmailError("이미 존재하는 이메일입니다.", data);
+
 
   // 3) 선호 카테고리 매핑
   for (const pref of data.preferences) {
@@ -32,7 +34,7 @@ export const userSignUp = async (raw: any) => {
 
   // 4) 응답 조립 (null 가드)
   const userRow = await getUser(userId);
-  if (!userRow) throw new Error('회원가입 직후 사용자 조회에 실패했습니다.');
+  if (!userRow) throw new UserNotFoundAfterSignUpError("회원가입 직후 사용자 조회에 실패했습니다.",{ userId });
 
   const prefs = await getUserPreferencesByUserId(userId);
   return responseFromUser({
