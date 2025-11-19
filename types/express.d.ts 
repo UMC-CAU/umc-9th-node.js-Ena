@@ -1,0 +1,16 @@
+// types/express.d.ts  (또는 src/types/express.d.ts, tsconfig 기준으로 맞게!)
+
+import "express";
+
+declare module "express" {
+  export interface Response {
+    success<T = any>(success: T): this;
+    error(params: {
+      errorCode?: string;
+      reason?: string | null;
+      data?: any;
+    }): this;
+  }
+}
+
+export {};
